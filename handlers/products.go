@@ -76,7 +76,16 @@ func (p *Products) MiddlewareProductValidation(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		prod, err := p.getProductFromBody(w, r)
 		if err != nil {
-			http.Error(w, "Unable to unmarshal json", http.StatusBadRequest)
+			p.l.Println("[Error] deserializing product", err)
+			http.Error(w, "Unable to unmarshal product json", http.StatusBadRequest)
+			return
+		}
+
+		// validate product
+		err = prod.Validate()
+		if err != nil {
+			p.l.Println("[Error] validating product", err)
+			http.Error(w, "Unable to validate product", http.StatusBadRequest)
 			return
 		}
 
