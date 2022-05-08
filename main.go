@@ -8,29 +8,43 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/Omar-Belghaouti/microservices/data"
 	"github.com/Omar-Belghaouti/microservices/handlers"
+	"github.com/go-openapi/runtime/middleware"
 	"github.com/gorilla/mux"
 )
 
 func main() {
 
 	l := log.New(os.Stdout, "🚀 product-api ", log.LstdFlags)
+	v := data.NewValidation()
 
-	ph := handlers.NewProducts(l)
+	ph := handlers.NewProducts(l, v)
 
 	sm := mux.NewRouter()
 
 	getRouter := sm.Methods(http.MethodGet).Subrouter()
-	getRouter.HandleFunc("/", ph.GetProducts)
+	getRouter.HandleFunc("/products/", ph.GetProducts)
+
+	getProductRouter := sm.Methods(http.MethodGet).Subrouter()
+	getProductRouter.HandleFunc("/products/{id:[0-9]+}", ph.GetProduct)
 
 	putRouter := sm.Methods(http.MethodPut).Subrouter()
-	putRouter.HandleFunc("/{id:[0-9]+}", ph.UpdateProduct)
+	putRouter.HandleFunc("/products/{id:[0-9]+}", ph.UpdateProduct)
 	putRouter.Use(ph.MiddlewareProductValidation)
 
 	postRouter := sm.Methods(http.MethodPost).Subrouter()
-	postRouter.HandleFunc("/", ph.AddProduct)
+	postRouter.HandleFunc("/products/", ph.AddProduct)
 	postRouter.Use(ph.MiddlewareProductValidation)
-	// sm.Handle("/products", ph)
+
+	deleteRouter := sm.Methods(http.MethodDelete).Subrouter()
+	deleteRouter.HandleFunc("/products/{id:[0-9]+}", ph.DeleteProduct)
+
+	opts := middleware.RedocOpts{SpecURL: "/swagger.yml"}
+	sh := middleware.Redoc(opts, nil)
+
+	getRouter.Handle("/docs", sh)
+	getRouter.Handle("/swagger.yml", http.FileServer(http.Dir("./")))
 
 	s := &http.Server{
 		Addr:         ":9090",
