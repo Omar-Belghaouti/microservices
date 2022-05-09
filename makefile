@@ -4,4 +4,7 @@ check_install:
 swagger: check_install
 	swagger generate spec -o ./swagger.yml --scan-models
 
-.PHONY: check_install swagger
+client: check_install
+	swagger generate client -f swagger.yml -A product-api -t client/     
+
+.PHONY: check_install swagger client

@@ -33,7 +33,7 @@ type ValidationError struct {
 	Messages []string `json:"messages"`
 }
 
-// swagger:route GET /products/ products listProducts
+// swagger:route GET /products/ products getProducts
 // Returns a list of products
 // responses:
 //  200: productsResponse
@@ -41,6 +41,7 @@ type ValidationError struct {
 // GetProducts returns the products from the data store
 func (p *Products) GetProducts(w http.ResponseWriter, r *http.Request) {
 	p.l.Println("Handle GET Products")
+	w.Header().Add("Content-Type", "application/json")
 	lp := data.GetProducts()
 	err := data.ToJSON(lp, w)
 	if err != nil {
@@ -58,6 +59,7 @@ func (p *Products) GetProducts(w http.ResponseWriter, r *http.Request) {
 // GetProduct handles GET requests
 func (p *Products) GetProduct(w http.ResponseWriter, r *http.Request) {
 	p.l.Println("Handle GET Product")
+	w.Header().Add("Content-Type", "application/json")
 
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
@@ -96,13 +98,14 @@ func (p *Products) GetProduct(w http.ResponseWriter, r *http.Request) {
 // AddProduct handles POST requests to add new products
 func (p *Products) AddProduct(w http.ResponseWriter, r *http.Request) {
 	p.l.Println("Handle POST Product")
+	w.Header().Add("Content-Type", "application/json")
 
 	prod := r.Context().Value(ProductKey{}).(*data.Product)
 
 	data.AddProduct(prod)
 }
 
-// swagger:route PUT /products/ products updateProduct
+// swagger:route PUT /products/{id} products updateProduct
 // Update a products details
 //
 // responses:
@@ -113,6 +116,7 @@ func (p *Products) AddProduct(w http.ResponseWriter, r *http.Request) {
 // UpdateProduct handles PUT requests to update products
 func (p *Products) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	p.l.Println("Handle PUT Product")
+	w.Header().Add("Content-Type", "application/json")
 
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
@@ -148,6 +152,7 @@ func (p *Products) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 // Delete handles DELETE requests and removes items from the database
 func (p *Products) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	p.l.Println("Handle DELETE Product")
+	w.Header().Add("Content-Type", "application/json")
 
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
@@ -182,6 +187,8 @@ type ProductKey struct{}
 
 func (p *Products) MiddlewareProductValidation(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
+
 		prod, err := p.getProductFromBody(w, r)
 		if err != nil {
 			p.l.Println("[Error] deserializing product", err)
