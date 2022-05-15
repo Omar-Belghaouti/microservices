@@ -11,6 +11,7 @@ import (
 	"github.com/Omar-Belghaouti/microservices/data"
 	"github.com/Omar-Belghaouti/microservices/handlers"
 	"github.com/go-openapi/runtime/middleware"
+	gohandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -46,9 +47,14 @@ func main() {
 	getRouter.Handle("/docs", sh)
 	getRouter.Handle("/swagger.yml", http.FileServer(http.Dir("./")))
 
+	// CORS
+	ch := gohandlers.CORS(
+		gohandlers.AllowedOrigins([]string{"*"}),
+		gohandlers.AllowedMethods([]string{"DELETE", "GET", "POST", "PUT"}))
+
 	s := &http.Server{
 		Addr:         ":9090",
-		Handler:      sm,
+		Handler:      ch(sm),
 		IdleTimeout:  time.Minute * 2,
 		ReadTimeout:  time.Second,
 		WriteTimeout: time.Second,
